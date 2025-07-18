@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.{js,jsx,ts,tsx,json,css,scss,html,md} text eol=lf
+*.{cmd,[cC][mM][dD]} text eol=crlf
+*.{bat,[bB][aA][tT]} text eol=crlf
