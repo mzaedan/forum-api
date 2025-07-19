@@ -20,7 +20,6 @@ describe('LoginPage', () => {
   it('should dispatch loginUser on submit', async () => {
     const store = mockStore({ auth: { status: 'idle' } });
 
-    // Mock the loginUser thunk to dispatch the expected actions
     vi.spyOn(auth, 'loginUser').mockImplementation(() => async (dispatch) => {
       dispatch({ type: 'auth/login/pending' });
       return Promise.resolve({
@@ -37,7 +36,6 @@ describe('LoginPage', () => {
       </Provider>
     );
 
-    // Fill in the form
     fireEvent.change(screen.getByPlaceholderText(/email/i), {
       target: { value: 'a@b.com' },
     });
@@ -45,13 +43,10 @@ describe('LoginPage', () => {
       target: { value: '1234' },
     });
 
-    // Submit the form
     fireEvent.click(screen.getByRole('button', { name: /masuk/i }));
 
-    // Wait for the async action to complete
     await waitFor(() => {
       const actions = store.getActions();
-      // Check if any action with type starting with 'auth/login' was dispatched
       expect(actions.some((a) => a.type.startsWith('auth/login'))).toBe(true);
     });
   });
@@ -59,8 +54,6 @@ describe('LoginPage', () => {
   it('should show error message on login failure', async () => {
     const store = mockStore({ auth: { status: 'idle' } });
     const errorMessage = 'Login gagal';
-
-    // Mock the loginUser thunk to properly simulate Redux behavior
     vi.spyOn(auth, 'loginUser').mockImplementation(() => (dispatch) => {
       dispatch({ type: 'auth/login/pending' });
       return {
