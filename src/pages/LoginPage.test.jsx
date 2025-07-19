@@ -8,17 +8,27 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
+import { thunk } from 'redux-thunk';
 import LoginPage from './LoginPage';
 import * as auth from '../reducers/auth';
 import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 
 const mockStore = configureStore([thunk]);
 
 describe('LoginPage', () => {
   it('should dispatch loginUser on submit', async () => {
     const store = mockStore({ auth: { status: 'idle' } });
-    jest.spyOn(auth, 'loginUser').mockReturnValue(() => Promise.resolve({ type: 'auth/login/fulfilled', payload: { id: 1 } }));
+
+    // Mock the loginUser thunk to dispatch the expected actions
+    vi.spyOn(auth, 'loginUser').mockImplementation(() => async (dispatch) => {
+      dispatch({ type: 'auth/login/pending' });
+      return Promise.resolve({
+        type: 'auth/login/fulfilled',
+        payload: { id: 1 },
+      });
+    });
+
     render(
       <Provider store={store}>
         <BrowserRouter>
@@ -26,18 +36,38 @@ describe('LoginPage', () => {
         </BrowserRouter>
       </Provider>
     );
-    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'a@b.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: '1234' } });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    // Fill in the form
+    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+      target: { value: 'a@b.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+      target: { value: '1234' },
+    });
+
+    // Submit the form
+    fireEvent.click(screen.getByRole('button', { name: /masuk/i }));
+
+    // Wait for the async action to complete
     await waitFor(() => {
       const actions = store.getActions();
+      // Check if any action with type starting with 'auth/login' was dispatched
       expect(actions.some((a) => a.type.startsWith('auth/login'))).toBe(true);
     });
   });
 
   it('should show error message on login failure', async () => {
     const store = mockStore({ auth: { status: 'idle' } });
-    jest.spyOn(auth, 'loginUser').mockReturnValue(() => Promise.reject(new Error('Login gagal')));
+    const errorMessage = 'Login gagal';
+
+    // Mock the loginUser thunk to properly simulate Redux behavior
+    vi.spyOn(auth, 'loginUser').mockImplementation(() => (dispatch) => {
+      dispatch({ type: 'auth/login/pending' });
+      return {
+        unwrap: () => Promise.reject(errorMessage),
+      };
+    });
+
     render(
       <Provider store={store}>
         <BrowserRouter>
@@ -45,11 +75,18 @@ describe('LoginPage', () => {
         </BrowserRouter>
       </Provider>
     );
-    fireEvent.change(screen.getByPlaceholderText(/email/i), { target: { value: 'fail@b.com' } });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), { target: { value: 'salah' } });
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+      target: { value: 'fail@b.com' },
+    });
+    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+      target: { value: 'salah' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /masuk/i }));
+
     await waitFor(() => {
-      expect(screen.getByText(/login gagal/i)).toBeInTheDocument();
+      const errorElement = screen.getByRole('alert');
+      expect(errorElement).toHaveTextContent(errorMessage);
     });
   });
 });

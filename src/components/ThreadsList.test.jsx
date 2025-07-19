@@ -7,6 +7,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ThreadsList from './ThreadsList';
+import { vi } from 'vitest';
 
 describe('ThreadsList', () => {
   const baseProps = {
@@ -15,8 +16,8 @@ describe('ThreadsList', () => {
     truncateText: (t) => t,
     calculateNetVotes: () => 1,
     hasUserVoted: () => false,
-    handleVote: jest.fn(),
-    handleRemoveVote: jest.fn(),
+    handleVote: vi.fn(),
+    handleRemoveVote: vi.fn(),
     votingLoading: {},
     searchTerm: '',
   };

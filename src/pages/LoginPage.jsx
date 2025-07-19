@@ -42,7 +42,7 @@ function LoginPage() {
         navigate('/');
       }, 500);
     } catch (err) {
-      setError(err || 'Login gagal');
+      setError((err && err.message) ? err.message : (typeof err === 'string' ? err : 'Login gagal'));
     }
   };
 
@@ -62,7 +62,7 @@ function LoginPage() {
       setShowRegister(false);
       setFormData({ email: '', password: '', username: '' });
     } catch (err) {
-      setError(err || 'Registrasi gagal');
+      setError((err && err.message) ? err.message : (typeof err === 'string' ? err : 'Registrasi gagal'));
     }
   };
 
