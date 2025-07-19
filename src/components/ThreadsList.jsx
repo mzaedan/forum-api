@@ -10,7 +10,9 @@ function ThreadsList({
   hasUserVoted,
   handleVote,
   handleRemoveVote,
-  votingLoading
+  votingLoading,
+  searchTerm,
+
 }) {
   const handleThreadClick = (threadId) => {
     window.location.href = `/thread/${threadId}`;
