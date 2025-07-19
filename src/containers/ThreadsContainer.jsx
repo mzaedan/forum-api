@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchThreadsAndUsers, voteThread, neutralizeThreadVote } from '../reducers/threads';
 import { fetchOwnProfile } from '../reducers/auth';
-import ControlsThread from '../components/ControlsThread';
 import LoadingState from '../components/LoadingState';
 import Pagination from '../components/Pagination';
+import AnimatedThreadCard from '../components/AnimatedThreadCard';
 
 function ThreadsContainer() {
   const dispatch = useDispatch();
@@ -15,6 +16,8 @@ function ThreadsContainer() {
   const currentUserId = useSelector((state) => state.auth.user?.id);
 
   const [votingLoading, setVotingLoading] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     dispatch(fetchThreadsAndUsers());
@@ -32,44 +35,80 @@ function ThreadsContainer() {
     );
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} menit yang lalu`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} jam yang lalu`;
-    } else if (diffInDays < 7) {
-      return `${diffInDays} hari yang lalu`;
-    } else {
-      return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-    }
-  };
-
-  const truncateText = (text, maxLength = 150) => {
-    if (text.length <= maxLength) return text;
-    return `${text.substring(0, maxLength)  }...`;
-  };
-
-  const calculateNetVotes = (upVotes, downVotes) => {
+  const calculateNetVotes = (upVotes = [], downVotes = []) => {
     return upVotes.length - downVotes.length;
   };
 
   const hasUserVoted = (thread, voteType) => {
     if (!currentUserId) return false;
     if (voteType === 'up') {
-      return thread.upVotesBy.includes(currentUserId);
+      return thread.upVotesBy?.includes(currentUserId) || false;
     } else {
-      return thread.downVotesBy.includes(currentUserId);
+      return thread.downVotesBy?.includes(currentUserId) || false;
     }
+  };
+
+  // Filter and sort threads
+  const filteredAndSortedThreads = React.useMemo(() => {
+    // Filter threads based on search term
+    const filtered = threads.filter((thread) => {
+      const user = getUserById(thread.ownerId);
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        thread.title?.toLowerCase().includes(searchLower) ||
+        thread.body?.toLowerCase().includes(searchLower) ||
+        thread.category?.toLowerCase().includes(searchLower) ||
+        user.name.toLowerCase().includes(searchLower)
+      );
+    });
+
+    // Sort threads
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      case 'oldest':
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      case 'mostComments':
+        return (b.totalComments || 0) - (a.totalComments || 0);
+      case 'leastComments':
+        return (a.totalComments || 0) - (b.totalComments || 0);
+      case 'mostVotes':
+        return calculateNetVotes(b.upVotesBy, b.downVotesBy) - calculateNetVotes(a.upVotesBy, a.downVotesBy);
+      default:
+        return 0;
+      }
+    });
+  }, [threads, searchTerm, sortBy, users]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+  };
+
+  const renderThreadItem = (thread, index) => {
+    const user = getUserById(thread.ownerId);
+
+    return (
+      <AnimatedThreadCard
+        key={thread.id}
+        thread={{
+          ...thread,
+          user,
+          upVotesBy: thread.upVotesBy || [],
+          downVotesBy: thread.downVotesBy || [],
+          totalComments: thread.totalComments || 0,
+          createdAt: thread.createdAt || new Date().toISOString()
+        }}
+        currentUserId={currentUserId}
+        index={index}
+        onVote={handleVote}
+        onThreadClick={(threadId) => window.location.href = `/thread/${threadId}`}
+      />
+    );
   };
 
   // Handler
@@ -83,15 +122,19 @@ function ThreadsContainer() {
     if (!thread) return;
     const hasUpVoted = hasUserVoted(thread, 'up');
     const hasDownVoted = hasUserVoted(thread, 'down');
-
-    if ((voteType === 'up' && hasUpVoted) || (voteType === 'down' && hasDownVoted)) {
-      return; // Jangan lakukan apa-apa jika sudah memilih vote yang sama
-    }
+    const isTogglingSameVote = (voteType === 'up' && hasUpVoted) || (voteType === 'down' && hasDownVoted);
 
     setVotingLoading((prev) => ({ ...prev, [threadId]: voteType }));
 
-    if (voteType === 'up' && hasDownVoted) {
-      // Jika sudah downvote, netralkan dulu baru upvote
+    if (isTogglingSameVote) {
+      dispatch(neutralizeThreadVote(threadId))
+        .catch((err) => {
+          alert(err.message || 'Terjadi kesalahan saat menghapus vote');
+        })
+        .finally(() => {
+          setVotingLoading((prev) => ({ ...prev, [threadId]: false }));
+        });
+    } else if (voteType === 'up' && hasDownVoted) {
       dispatch(neutralizeThreadVote(threadId))
         .then(() => dispatch(voteThread({ threadId, voteType: 'up' })))
         .catch((err) => {
@@ -101,7 +144,6 @@ function ThreadsContainer() {
           setVotingLoading((prev) => ({ ...prev, [threadId]: false }));
         });
     } else if (voteType === 'down' && hasUpVoted) {
-      // Jika sudah upvote, netralkan dulu baru downvote
       dispatch(neutralizeThreadVote(threadId))
         .then(() => dispatch(voteThread({ threadId, voteType: 'down' })))
         .catch((err) => {
@@ -111,7 +153,6 @@ function ThreadsContainer() {
           setVotingLoading((prev) => ({ ...prev, [threadId]: false }));
         });
     } else {
-      // Jika belum memilih, langsung vote
       dispatch(voteThread({ threadId, voteType }))
         .catch((err) => {
           alert(err.message || 'Terjadi kesalahan saat memberikan vote');
@@ -122,41 +163,69 @@ function ThreadsContainer() {
     }
   };
 
-  const handleRemoveVote = (threadId, e) => {
-    e.stopPropagation();
-    if (!currentUserId) return;
-
-    setVotingLoading((prev) => ({ ...prev, [threadId]: 'remove' }));
-
-    dispatch(neutralizeThreadVote(threadId))
-      .catch((err) => {
-        alert(err.message || 'Terjadi kesalahan saat menghapus vote');
-      })
-      .finally(() => {
-        setVotingLoading((prev) => ({ ...prev, [threadId]: false }));
-      });
-  };
 
   return (
-    <div>
+    <div className="container py-4">
+      {/* Search and Filter Controls */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="row align-items-center g-4">
+            {/* Search Input */}
+            <div className="col-md-4">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                  🔍
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Cari thread..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+              </div>
+            </div>
+
+            {/* Sort Select */}
+            <div className="col-md-3">
+              <select
+                className="form-select"
+                value={sortBy}
+                onChange={handleSortChange}
+              >
+                <option value="newest">Terbaru</option>
+                <option value="oldest">Terlama</option>
+                <option value="mostComments">Paling Banyak Komentar</option>
+                <option value="leastComments">Paling Sedikit Komentar</option>
+                <option value="mostVotes">Paling Banyak Votes</option>
+              </select>
+            </div>
+
+            {/* Create Thread Button */}
+            <div className="col-md-5">
+              <div className="d-flex justify-content-md-end">
+                <a href="/add-thread" className="btn btn-dark">
+                  <span className="me-2">➕</span>
+                  Buat Thread Baru
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Threads List */}
       {status === 'loading' && <LoadingState />}
       {status === 'failed' && <div className="alert alert-danger">{error}</div>}
       {status === 'succeeded' && (
-        <ControlsThread
-          threads={threads}
-          users={users}
-          getUserById={getUserById}
-          formatDate={formatDate}
-          truncateText={truncateText}
-          calculateNetVotes={calculateNetVotes}
-          hasUserVoted={hasUserVoted}
-          handleVote={handleVote}
-          handleRemoveVote={handleRemoveVote}
-          votingLoading={votingLoading}
-          currentUserId={currentUserId}
-        />
+        <div className="row g-4">
+          {filteredAndSortedThreads.map((thread, index) => renderThreadItem(thread, index))}
+        </div>
       )}
-      <Pagination />
+      <div className="mt-4">
+        <Pagination />
+      </div>
     </div>
   );
 }

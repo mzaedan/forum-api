@@ -52,7 +52,7 @@ const mockStore = configureStore({
 const getUserById = (userId) => ({
   id: userId,
   name: userId === 'user-1' ? 'John Doe' : 'Jane Smith',
-  avatar: userId === 'user-1' 
+  avatar: userId === 'user-1'
     ? 'https://ui-avatars.com/api/?name=John+Doe&background=0D8ABC&color=fff'
     : 'https://ui-avatars.com/api/?name=Jane+Smith&background=FF6B6B&color=fff',
 });
@@ -77,12 +77,13 @@ const calculateNetVotes = (upVotes = [], downVotes = []) => upVotes.length - dow
 
 const hasUserVoted = (thread, voteType) => {
   const userId = 'user-1'; // Current user ID
-  return voteType === 'up' 
+  return voteType === 'up'
     ? thread.upVotesBy.includes(userId)
     : thread.downVotesBy.includes(userId);
 };
 
 // Wrapper component to provide all necessary contexts with Bootstrap styling
+// eslint-disable-next-line react/prop-types
 const StoryWrapper = ({ children }) => (
   <Provider store={mockStore}>
     <BrowserRouter>
@@ -118,8 +119,8 @@ export default {
 
 // Template for stories
 const Template = (args) => (
-  <ThreadsList 
-    {...args} 
+  <ThreadsList
+    {...args}
     getUserById={getUserById}
     formatDate={formatDate}
     truncateText={truncateText}
@@ -180,29 +181,29 @@ const mockThreads = [
 ];
 
 const mockUsers = {
-  'user-1': { 
-    id: 'user-1', 
-    name: 'Dimas Saputra', 
+  'user-1': {
+    id: 'user-1',
+    name: 'Dimas Saputra',
     email: 'dimas@example.com',
-    avatar: 'https://ui-avatars.com/api/?name=Dimas+Saputra&background=0D8ABC&color=fff' 
+    avatar: 'https://ui-avatars.com/api/?name=Dimas+Saputra&background=0D8ABC&color=fff'
   },
-  'user-2': { 
-    id: 'user-2', 
-    name: 'Dicoding Team', 
+  'user-2': {
+    id: 'user-2',
+    name: 'Dicoding Team',
     email: 'team@dicoding.com',
-    avatar: 'https://ui-avatars.com/api/?name=Dicoding+Team&background=FF6B6B&color=fff' 
+    avatar: 'https://ui-avatars.com/api/?name=Dicoding+Team&background=FF6B6B&color=fff'
   },
-  'user-3': { 
-    id: 'user-3', 
-    name: 'Zaedan', 
+  'user-3': {
+    id: 'user-3',
+    name: 'Zaedan',
     email: 'zaedan@example.com',
-    avatar: 'https://ui-avatars.com/api/?name=Zaedan&background=00C896&color=fff' 
+    avatar: 'https://ui-avatars.com/api/?name=Zaedan&background=00C896&color=fff'
   },
-  'user-4': { 
-    id: 'user-4', 
-    name: 'Sarah Johnson', 
+  'user-4': {
+    id: 'user-4',
+    name: 'Sarah Johnson',
     email: 'sarah@example.com',
-    avatar: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=9C27B0&color=fff' 
+    avatar: 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=9C27B0&color=fff'
   },
 };
 
@@ -241,7 +242,7 @@ import ControlsThread from '../components/ControlsThread';
 export const WithSearch = (args) => {
   // Create a mock users object from the threads
   const mockUsers = {};
-  args.threads.forEach(thread => {
+  args.threads.forEach((thread) => {
     if (!mockUsers[thread.ownerId]) {
       mockUsers[thread.ownerId] = {
         id: thread.ownerId,

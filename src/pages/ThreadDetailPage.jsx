@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/HeaderPage';
 import ThreadBody from '../components/CommentThreadBody';
 import ThreadStats from '../components/CommentThreadStats';
-import CommentForm from '../components/CommentForm';
+import EnhancedCommentForm from '../components/EnhancedCommentForm';
 import CommentsList from '../components/CommentsList';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchThreadDetail, createComment } from '../reducers/threads';
@@ -17,28 +17,28 @@ function ThreadDetailPage() {
   const threadDetailError = useSelector((state) => state.threads.threadDetailError);
   const user = useSelector((state) => state.auth.user);
 
-  const [newComment, setNewComment] = useState('');
-  const [commentError, setCommentError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const { status } = useSelector((state) => state.threads);
-
-  const handleSubmitComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim()) {
-      setCommentError('Komentar tidak boleh kosong');
+  const handleSubmitComment = async (content) => {
+    if (!content.trim()) {
+      setError('Komentar tidak boleh kosong');
       return;
     }
 
+    setIsSubmitting(true);
+    setError(null);
+
     try {
-      await dispatch(createComment({ threadId: id, content: newComment }));
-      setNewComment('');
-      setCommentError(null);
-      dispatch(fetchThreadDetail(id));
-    } catch (error) {
-      setCommentError(error.message || 'Gagal mengirim komentar');
+      await dispatch(createComment({ threadId: id, content }));
+      // Refresh thread detail to show the new comment
+      await dispatch(fetchThreadDetail(id));
+    } catch (err) {
+      setError(err.message || 'Gagal mengirim komentar');
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  const isSubmitting = status === 'loading';
 
   useEffect(() => {
     dispatch(fetchThreadDetail(id));
@@ -149,18 +149,24 @@ function ThreadDetailPage() {
                       Komentar ({comments.length})
                     </h5>
                   </div>
-                  <div className="card-body p-0">
-                    {/* Add Comment Form */}
-                    <CommentForm
-                      newComment={newComment}
-                      setNewComment={setNewComment}
-                      isSubmitting={isSubmitting}
-                      onSubmit={handleSubmitComment}
-                      error={commentError}
-                      user={user}
-                    />
+                  <div className="card-body p-4">
+                    {user && (
+                      <div className="mb-4">
+                        <h4 className="mb-3 pb-2 border-bottom">Beri Komentar</h4>
+                        <div className="px-2">
+                          <EnhancedCommentForm
+                            onSubmit={handleSubmitComment}
+                            isSubmitting={isSubmitting}
+                            user={user}
+                          />
+                          {error && <div className="alert alert-danger mt-3">{error}</div>}
+                        </div>
+                      </div>
+                    )}
                     {/* Comments List */}
-                    <CommentsList comments={comments} formatDate={formatDate} />
+                    <div className="mt-4">
+                      <CommentsList comments={comments} formatDate={formatDate} />
+                    </div>
                   </div>
                 </div>
               </div>
