@@ -15,7 +15,6 @@ function ThreadsList({
 
 }) {
   const handleThreadClick = (threadId) => {
-    // Navigate to thread detail page
     window.location.href = `/thread/${threadId}`;
   };
 
