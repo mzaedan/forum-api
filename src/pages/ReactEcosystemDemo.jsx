@@ -1,4 +1,4 @@
-/* eslint-disable linebreak-style */
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import EnhancedCommentForm from '../components/EnhancedCommentForm';
@@ -49,18 +49,15 @@ function ReactEcosystemDemo() {
 
   const handleCommentSubmit = async (comment) => {
     setIsSubmitting(true);
-    
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     const newComment = {
       id: Date.now().toString(),
       text: comment,
       user: mockUser,
       createdAt: new Date().toISOString()
     };
-    
-    setComments(prev => [newComment, ...prev]);
+    setComments((prev) => [newComment, ...prev]);
     setIsSubmitting(false);
   };
 
@@ -76,7 +73,7 @@ function ReactEcosystemDemo() {
 
   const pageVariants = {
     initial: { opacity: 0 },
-    animate: { 
+    animate: {
       opacity: 1,
       transition: { duration: 0.5 }
     }
@@ -84,10 +81,10 @@ function ReactEcosystemDemo() {
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
+      transition: { duration: 0.6, ease: 'easeOut' }
     }
   };
 
@@ -111,7 +108,7 @@ function ReactEcosystemDemo() {
         <p className="lead text-muted">
           Demonstrasi implementasi <strong>React Hook Form</strong> dan <strong>Framer Motion</strong>
         </p>
-        
+
         <div className="row justify-content-center mt-4">
           <div className="col-md-6">
             <motion.div
@@ -220,7 +217,6 @@ function ReactEcosystemDemo() {
           </h3>
           <span className="badge bg-success">Framer Motion</span>
         </div>
-        
         <div className="row">
           {mockThreads.map((thread, index) => (
             <div key={thread.id} className="col-12">
@@ -245,8 +241,8 @@ function ReactEcosystemDemo() {
         className="text-center mt-5 pt-4 border-top"
       >
         <p className="text-muted">
-          Demo implementasi React Ecosystem: 
-          <strong className="text-primary"> React Hook Form</strong> & 
+          Demo implementasi React Ecosystem:
+          <strong className="text-primary"> React Hook Form</strong> &
           <strong className="text-success"> Framer Motion</strong>
         </p>
       </motion.footer>
