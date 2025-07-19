@@ -10,12 +10,9 @@ function ThreadsList({
   hasUserVoted,
   handleVote,
   handleRemoveVote,
-  votingLoading,
-  searchTerm,
-
+  votingLoading
 }) {
   const handleThreadClick = (threadId) => {
-    // Navigate to thread detail page
     window.location.href = `/thread/${threadId}`;
   };
 
