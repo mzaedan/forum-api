@@ -22,20 +22,22 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '18'
-          cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
-        
-      - name: Run tests with retry
-        continue-on-error: true
         run: |
-          # First run with debug info
-          DEBUG=cypress:* npx cypress run --browser chrome --headless
+          npm ci
+          npx cypress install
+        
+      - name: Run tests
+        run: |
+          # Start the development server in the background
+          nohup npm run dev > server.log 2>&1 &
           
-          # If first run fails, wait 5 seconds and try again
-          if [ $? -ne 0 ]; then
-            echo "First run failed, retrying after delay..."
-            sleep 5
-            npx cypress run --browser chrome --headless
-          fi
+          # Wait for the server to start
+          npx wait-on http://localhost:5173
+          
+          # Run Cypress tests with retry
+          npx cypress run --browser chrome --headless || \
+          (echo "First run failed, retrying after delay..." && \
+           sleep 5 && \
+           npx cypress run --browser chrome --headless)
