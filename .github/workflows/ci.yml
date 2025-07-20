@@ -1,63 +1,21 @@
 name: Continuous Integration
-
+ 
 on:
   pull_request:
     branches:
       - master
-
+ 
 jobs:
   automation-test-job:
     runs-on: ubuntu-latest
-    
-    env:
-      CI: true
-      NODE_ENV: test
-      CYPRESS_BASE_URL: http://localhost:5173
-      CYPRESS_CACHE_FOLDER: ~/.cache/Cypress
-    
+ 
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Cache Cypress
-        uses: actions/cache@v3
-        id: cache-cypress
-        with:
-          path: ~/.cache/Cypress
-          key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      
-      - name: Install dependencies
+          node-version: ${{ matrix.node-version }}
+      - name: npm install and test
         run: |
-          npm ci
-          
-          # Only install Cypress if not cached
-          if [ -z "${{ steps.cache-cypress.outputs.cache-hit }}" ]; then
-            echo "Installing Cypress..."
-            npx cypress install
-          else
-            echo "Using cached Cypress"
-          fi
-      
-      - name: Run tests
-        timeout-minutes: 10
-        run: |
-          # Start server in background with production build for faster startup
-          echo "Starting server..."
-          npm run build
-          nohup npx vite preview --host 0.0.0.0 --port 5173 > server.log 2>&1 &
-          
-          # Wait for server to be ready
-          echo "Waiting for server to start..."
-          npx wait-on http://localhost:5173 --timeout 30000
-          
-          # Run tests with retry
-          echo "Running tests..."
-          npx cypress run --browser chrome --headless || \
-          (echo "First run failed, retrying after delay..." && \
-           sleep 3 && \
-           npx cypress run --browser chrome --headless)
+          npm install
+          npm run ci:test
