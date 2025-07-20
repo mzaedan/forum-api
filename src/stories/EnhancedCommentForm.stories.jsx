@@ -1,4 +1,5 @@
-/* eslint-disable linebreak-style */
+
+import React from 'react';
 import EnhancedCommentForm from '../components/EnhancedCommentForm';
 
 export default {
@@ -34,7 +35,7 @@ export const Default = {
     onSubmit: async (comment) => {
       console.log('Comment submitted:', comment);
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 };
@@ -68,7 +69,7 @@ export const Interactive = {
     const handleSubmit = async (comment) => {
       alert(`Comment submitted: "${comment}"`);
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
     };
 
     return <EnhancedCommentForm {...args} onSubmit={handleSubmit} />;

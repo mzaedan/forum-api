@@ -1,44 +1,21 @@
 name: Continuous Integration
-
+ 
 on:
   pull_request:
     branches:
       - master
-
+ 
 jobs:
-  test:
-    name: Run Tests
+  automation-test-job:
     runs-on: ubuntu-latest
-    
+ 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
         with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
+          node-version: ${{ matrix.node-version }}
+      - name: npm install and test
         run: |
-          npm ci
-          npx cypress install
-        
-      - name: Run Unit Tests
-        run: npm run test
-        
-      - name: Run E2E Tests
-        run: |
-          # Start production server
-          npm run build
-          npx vite preview --port 5173 &
-          
-          # Wait for server to start
-          npx wait-on http://localhost:5173 --timeout 10000
-          
-          # Run Cypress tests with retry
-          npx cypress run --browser chrome --headless || \
-          (echo "First run failed, retrying..." && \
-           npx cypress run --browser chrome --headless)
+          npm install
           npm run ci:test
