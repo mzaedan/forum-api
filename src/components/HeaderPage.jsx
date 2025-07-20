@@ -12,7 +12,7 @@ function Header() {
           <div className="col-md-6">
             <h1 className="h3 mb-0 fw-bold text-dark">Forum Discussion</h1>
             <p className="text-muted mb-0 small">
-              Komunitas Developer Indonesia Raya
+              Komunitas Developer Nusantara
             </p>
           </div>
           <div className="col-md-6 text-md-end">
