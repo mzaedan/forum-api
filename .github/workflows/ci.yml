@@ -9,6 +9,7 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Checkout code
@@ -26,19 +27,25 @@ jobs:
           npx cypress install
         
       - name: Run Unit Tests
-        run: npm run test
+        run: npm test -- --watch=false
         
       - name: Run E2E Tests
         run: |
-          # Start production server
+          # Build production assets
+          echo "Building production assets..."
           npm run build
-          npx vite preview --port 5173 &
           
-          # Wait for server to start
-          npx wait-on http://localhost:5173 --timeout 10000
+          # Start production server in background
+          echo "Starting production server..."
+          npx vite preview --host 0.0.0.0 --port 5173 > server.log 2>&1 &
+          
+          # Wait for server to be ready
+          echo "Waiting for server to start..."
+          npx wait-on http://localhost:5173 --timeout 30000
           
           # Run Cypress tests with retry
+          echo "Running E2E tests..."
           npx cypress run --browser chrome --headless || \
-          (echo "First run failed, retrying..." && \
+          (echo "First run failed, retrying after delay..." && \
+           sleep 5 && \
            npx cypress run --browser chrome --headless)
-          npm run ci:test
