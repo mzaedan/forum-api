@@ -1,4 +1,5 @@
-/* eslint-disable linebreak-style */
+
+import React from 'react';
 import AnimatedThreadCard from '../components/AnimatedThreadCard';
 
 export default {
